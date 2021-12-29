@@ -20,7 +20,9 @@ with open('mnist_digits_data.txt') as f:
 
 for i in range(10):
   for j in range(10):
-    pic = data[200 * (i) + j]
+    pic = data[1000]
+
+    # pic = data[997+(i) + j]
     pic = np.array(pic)
     picmatreverse = np.zeros((14,15))
     counter = 0
