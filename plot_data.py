@@ -18,9 +18,9 @@ with open('mnist_digits_data.txt') as f:
     # print(len(line))
     data.append(line)
 
-for i in range(10):
-  for j in range(10):
-    pic = data[1000]
+for i in range(1):
+  for j in range(1):
+    pic = data[1100]
 
     # pic = data[997+(i) + j]
     pic = np.array(pic)
