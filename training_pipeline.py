@@ -7,14 +7,22 @@ from sklearn.model_selection import KFold
 from PIL import Image
 import random
 
+import skimage as sk
+from skimage import transform
+from skimage import util
+from skimage import io
 
+from augmentations import *
 
 
 ####Paramaters for data augmentation####
 #Value that determines by how much the data augmentation method should create new data
-data_multiplier = 5
+data_multiplier = 4
 #Value that determines the chance that a pixel in an image is changed to noise
 pixel_aug_chance = 0.15
+
+num_rot = 2 # number of rotated images to augment from each original image
+num_noise = 2 # number of noise image augmented from each original image
 
 ####Parameters for the CNN####
 #Activation function
@@ -56,67 +64,46 @@ print(labels)
 data = data / np.amax(data)
 
 
+#Create data to be multidimensional
+data = np.reshape(data, (2000, 16, 15, 1))
 
-# pic = data[0]
-# for idx in range(len(pic)):
-#   if(random.uniform(0, 1) < 0.2):
-#     pic[idx] = random.uniform(0, 1)
-
-# ###Show one datapoint for testing of data augmentation   
-# pic = np.array(pic)
-# picmatreverse = np.zeros((14,15))
-# counter = 0
-# for column in range(14):
-#   for row in range(15):
-#     picmatreverse[column][row] = picmatreverse[column][row] - pic[counter]
-#     counter += 1
-# picmat = np.zeros((14,15))
-# for k in range(14):
-#   picmat[:, k] = picmatreverse[:, 14 - k]
-#   # print(picmat)
-# plt.gray()
-# plt.imshow(picmatreverse)
-# plt.colorbar()
-# plt.show()
-
-new_data = []
-for idx1 in range(len(data)):
-  pic = data[idx1]
-  #For each image, create multiple variations of the image by adding noise.
-  #The amount of variations per image is determined by the data_multiplier variable
-  for idx2 in range(data_multiplier):
-    pic_to_augment = pic.copy()    
-    for idx3 in range(len(pic_to_augment)):
-      #For each pixel, small chance to add noise
-      if(random.uniform(0, 1) < pixel_aug_chance):
-        pic_to_augment[idx3] = random.uniform(0, 1)
-    #Add the newly generated digit to the augmented dataset    
-    new_data.append(pic_to_augment)
+###Old data augmentation
+# new_data = []
+# for idx1 in range(len(data)):
+#   pic = data[idx1]
+#   #For each image, create multiple variations of the image by adding noise.
+#   #The amount of variations per image is determined by the data_multiplier variable
+#   for idx2 in range(data_multiplier):
+#     pic_to_augment = pic.copy()    
+#     for idx3 in range(len(pic_to_augment)):
+#       #For each pixel, small chance to add noise
+#       if(random.uniform(0, 1) < pixel_aug_chance):
+#         pic_to_augment[idx3] = random.uniform(0, 1)
+#     #Add the newly generated digit to the augmented dataset    
+#     new_data.append(pic_to_augment)
 
 
-original_data = data
-data = np.asarray(new_data)
-print(data.shape)
+# original_data = data
+# data = np.asarray(new_data)
+# print(data.shape)
 
-pic = data[0]
+data_augmented = []
 
-# ###Show one datapoint for testing of data augmentation   
-# pic = np.array(pic)
-# picmatreverse = np.zeros((14,15))
-# counter = 0
-# for column in range(14):
-#   for row in range(15):
-#     picmatreverse[column][row] = picmatreverse[column][row] - pic[counter]
-#     counter += 1
-# picmat = np.zeros((14,15))
-# for k in range(14):
-#   picmat[:, k] = picmatreverse[:, 14 - k]
-#   # print(picmat)
-# plt.gray()
-# plt.imshow(picmatreverse)
-# plt.colorbar()
-# plt.show()
+for image in data:
+    for i in range(num_rot):
+        rot_img = random_rotation(image)
+        data_augmented.append(rot_img)
+    for j in range(num_noise):
+        noise_img = random_noise(image)
+        data_augmented.append(rot_img)
 
+data_augmented = np.array(data_augmented)
+print("Shape of augmented 2d data = " + str(data_augmented.shape))
+
+#labels for augmented data
+labels_aug = np.zeros(200 * int(data_augmented.shape[0]/len(data)))
+for i in range (1, 10):
+  labels_aug = np.concatenate((labels_aug, np.zeros(200* int(data_augmented.shape[0]/len(data)))+i))
 
 #Define the Kfold Cross Validation Model
 folds = 10
@@ -127,12 +114,12 @@ loss_per_fold = []
 model_per_fold = []
 
 current_fold = 1
-for train, test in kfold.split(data, labels):
+for train, test in kfold.split(data_augmented, labels):
 
 
   #gepakt van een tutorial, moeten we aanpassen
   model = keras.Sequential([
-      keras.layers.Conv1D(filters = 32, kernel_size = 3, activation = activation, input_shape = (None, 240)),
+      keras.layers.Conv2D(filters = 32, kernel_size = (3,3), activation = activation, input_shape = (16,15,1)),
       keras.layers.MaxPooling1D(2),
       keras.layers.Dense(10, activation= activation),
       keras.layers.Dense(10, activation='softmax')
