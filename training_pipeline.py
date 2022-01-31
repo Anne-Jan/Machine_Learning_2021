@@ -120,7 +120,7 @@ for train, test in kfold.split(data_augmented, labels):
   #gepakt van een tutorial, moeten we aanpassen
   model = keras.Sequential([
       keras.layers.Conv2D(filters = 32, kernel_size = (3,3), activation = activation, input_shape = (16,15,1)),
-      keras.layers.MaxPooling1D(2),
+      keras.layers.MaxPooling2D(2,2),
       keras.layers.Dense(10, activation= activation),
       keras.layers.Dense(10, activation='softmax')
       #add layers
