@@ -136,10 +136,8 @@ for train, test in kfold.split(X_train, y_train):
   print("###################################")
   print("Fold Number:" + str(current_fold))
 
-  print(X_train[train].shape)
-  print(y_train[train])
-  history = model.fit(X_train[train], y_train[train], epochs = 10)
-  model_per_fold.append(model)
+  history = model.fit(X_train[train], y_train[train], epochs = 10, validation_data = (X_train[test], y_train[test]))
+  model_per_fold.append((model, history))
   score = model.evaluate(X_train[test], y_train[test], verbose = 0)
 
   accuracy_per_fold.append(score[1] * 100)
@@ -152,13 +150,30 @@ for idx in range(current_fold - 1):
 
 
 #Take the model with the highest accuracy from the cross validation
-best_model = model_per_fold[accuracy_per_fold.index(max(accuracy_per_fold))]
+best_model, best_history = model_per_fold[accuracy_per_fold.index(max(accuracy_per_fold))]
+
+#Plot the accuracy versus the validation accuracy
+
+plt.plot(best_history.history['accuracy'], label='accuracy')
+plt.plot(best_history.history['val_accuracy'], label = 'val_accuracy')
+plt.xlabel('Epoch')
+plt.ylabel('Accuracy')
+plt.ylim([0.5, 1])
+plt.legend(loc='lower right')
+plt.show()
+
+
 
 #Shuffle the validation set of the original data and its labels
 data, labels_original_data = shuffle(validation_original_data, validation_labels_original_data, random_state = 0)
 
 #evaluate the model best on the augmented version of the test data created from the original data
 score_original_data = model.evaluate(validation_original_data, validation_labels_original_data, verbose = 0)
+label_probabilities = model.predict(validation_original_data)
+predicted_labels = tf.argmax(label_probabilities, axis = 1)
+print(predicted_labels)
+print(predicted_labels.shape)
+print(tf.math.confusion_matrix(labels = validation_labels_original_data, predictions = predicted_labels, num_classes = 10))
 
 print("################################################")
 print("Accuracy on original data = " + str(score_original_data[1] * 100))
