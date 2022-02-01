@@ -25,8 +25,8 @@ for device in gpu_devices:
 #Value that determines the chance that a pixel in an image is changed to noise
 var = 0.075
 
-num_rot = 3 # number of rotated images to augment from each original image
-num_noise = 3 # number of noise image augmented from each original image
+num_rot = 1 # number of rotated images to augment from each original image
+num_noise = 1 # number of noise image augmented from each original image
 
 #Value that determines by how much the data augmentation method should create new data
 data_multiplier = num_rot + num_noise
@@ -72,27 +72,37 @@ data = np.reshape(data, (2000, 16, 15, 1))
 
 print("Shape of original 2d data = " + str(data.shape))
 
+
+#Create a split, use one for the training pipeline, with data augmentation.
+train_original_data, validation_original_data, train_labels_original_data, validation_labels_original_data = train_test_split(data, labels_original_data, test_size=0.2, random_state=0)
+
+
+
 data_augmented = []
+labels_aug = []
 
-for image in data:
-    for i in range(num_rot):
-        rot_img = random_rotation(image)
-        data_augmented.append(rot_img)
-    for j in range(num_noise):
-        noise_img = random_noise(image, var)
-        data_augmented.append(noise_img)
+#Idx used to get the correct label of the image we want to create augmentations of
+labelidx = 0
+for image in train_original_data:
+  label = train_labels_original_data[labelidx]
+  for i in range(num_rot):
+    rot_img = random_rotation(image)
+    data_augmented.append(rot_img)
+    labels_aug.append(label)
+  for j in range(num_noise):
+    noise_img = random_noise(image, var)
+    data_augmented.append(noise_img)
+    labels_aug.append(label)
+  labelidx += 1
 
-plt.imshow(data_augmented[3], cmap = 'Greys', interpolation='nearest')
-plt.show()
+labels_aug = np.asarray(labels_aug)
+# plt.imshow(data_augmented[3], cmap = 'Greys', interpolation='nearest')
+# plt.show()
+# print(labels_aug[3])
 
 data_augmented = np.asarray(data_augmented)
 print("Shape of augmented 2d data = " + str(data_augmented.shape))
 
-#labels for augmented data
-#labels are 0-9, 200 of each in the base dataset
-labels_aug = np.zeros(200 * data_multiplier)
-for i in range (1, 10):
-  labels_aug = np.concatenate((labels_aug, np.zeros(200 * data_multiplier)+i))
 
 # Split augmented data in train and test data
 X_train, X_test, y_train, y_test = train_test_split(data_augmented, labels_aug, test_size=0.2, random_state=0)
@@ -106,10 +116,9 @@ loss_per_fold = []
 model_per_fold = []
 
 current_fold = 1
+#Perform k-fold cross validation on the train split
 for train, test in kfold.split(X_train, y_train):
 
-
-  #gepakt van een tutorial, moeten we aanpassen
   model = keras.Sequential([
       keras.layers.Conv2D(filters = 64, kernel_size = (3,3), activation = activation, input_shape = (16, 15, 1)),
       keras.layers.MaxPooling2D((2,2)),
@@ -128,7 +137,7 @@ for train, test in kfold.split(X_train, y_train):
   print("Fold Number:" + str(current_fold))
 
   print(X_train[train].shape)
-  print(y_train[train].shape)
+  print(y_train[train])
   history = model.fit(X_train[train], y_train[train], epochs = 10)
   model_per_fold.append(model)
   score = model.evaluate(X_train[test], y_train[test], verbose = 0)
@@ -142,14 +151,15 @@ for idx in range(current_fold - 1):
   print("Loss for fold: " + str(idx + 1)+ " = " + str(loss_per_fold[idx]))
 
 
-#take the model with the highest accuracy from the cross validation
+#Take the model with the highest accuracy from the cross validation
 best_model = model_per_fold[accuracy_per_fold.index(max(accuracy_per_fold))]
 
-#shuffle the original data and its labels
-data, labels_original_data = shuffle(data, labels_original_data, random_state = 0)
+#Shuffle the validation set of the original data and its labels
+data, labels_original_data = shuffle(validation_original_data, validation_labels_original_data, random_state = 0)
 
-#evaluate the model best on the original data
-score_original_data = model.evaluate(data, labels_original_data, verbose = 0)
+#evaluate the model best on the augmented version of the test data created from the original data
+score_original_data = model.evaluate(validation_original_data, validation_labels_original_data, verbose = 0)
+
 print("################################################")
 print("Accuracy on original data = " + str(score_original_data[1] * 100))
 print("Loss on original data = " + str(score_original_data[0]))
@@ -157,6 +167,7 @@ print("Loss on original data = " + str(score_original_data[0]))
 
 #evaluate the model best on the augmented test data
 score_aug_test = model.evaluate(X_test, y_test, verbose = 0)
+
 print("################################################")
 print("Accuracy on augmented test data = " + str(score_aug_test[1] * 100))
 print("Loss on augmented test data = " + str(score_aug_test[0]))
