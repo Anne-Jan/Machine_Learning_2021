@@ -7,10 +7,10 @@ from sklearn.model_selection import KFold
 from PIL import Image
 import random
 
+from sklearn.model_selection import train_test_split
 import skimage as sk
-from skimage import transform
-from skimage import util
-from skimage import io
+from skimage import transform, util, io
+
 
 from augmentations import *
 
@@ -25,8 +25,8 @@ for device in gpu_devices:
 #Value that determines the chance that a pixel in an image is changed to noise
 var = 0.075
 
-num_rot = 2 # number of rotated images to augment from each original image
-num_noise = 2 # number of noise image augmented from each original image
+num_rot = 3 # number of rotated images to augment from each original image
+num_noise = 3 # number of noise image augmented from each original image
 
 #Value that determines by how much the data augmentation method should create new data
 data_multiplier = num_rot + num_noise
@@ -94,6 +94,8 @@ labels_aug = np.zeros(200 * data_multiplier)
 for i in range (1, 10):
   labels_aug = np.concatenate((labels_aug, np.zeros(200 * data_multiplier)+i))
 
+# Split augmented data in train and test data
+X_train, X_test, y_train, y_test = train_test_split(data_augmented, labels_aug, test_size=0.2, random_state=0)
 
 #Define the Kfold Cross Validation Model
 folds = 10
@@ -104,7 +106,7 @@ loss_per_fold = []
 model_per_fold = []
 
 current_fold = 1
-for train, test in kfold.split(data_augmented, labels_aug):
+for train, test in kfold.split(X_train, y_train):
 
 
   #gepakt van een tutorial, moeten we aanpassen
@@ -125,11 +127,11 @@ for train, test in kfold.split(data_augmented, labels_aug):
   print("###################################")
   print("Fold Number:" + str(current_fold))
 
-  print(data_augmented[train].shape)
-  print(labels_aug[train].shape)
-  history = model.fit(data_augmented[train], labels_aug[train], epochs = 10)
+  print(X_train[train].shape)
+  print(y_train[train].shape)
+  history = model.fit(X_train[train], y_train[train], epochs = 10)
   model_per_fold.append(model)
-  score = model.evaluate(data_augmented[test], labels_aug[test], verbose = 0)
+  score = model.evaluate(X_train[test], y_train[test], verbose = 0)
 
   accuracy_per_fold.append(score[1] * 100)
   loss_per_fold.append(score[0])
@@ -138,7 +140,6 @@ for train, test in kfold.split(data_augmented, labels_aug):
 for idx in range(current_fold - 1):
   print("Accuracy for fold: " + str(idx + 1)+ " = " + str(accuracy_per_fold[idx]))
   print("Loss for fold: " + str(idx + 1)+ " = " + str(loss_per_fold[idx]))
-
 
 
 #take the model with the highest accuracy from the cross validation
@@ -154,9 +155,11 @@ print("Accuracy on original data = " + str(score_original_data[1] * 100))
 print("Loss on original data = " + str(score_original_data[0]))
 
 
-
-
-
+#evaluate the model best on the augmented test data
+score_aug_test = model.evaluate(X_test, y_test, verbose = 0)
+print("################################################")
+print("Accuracy on augmented test data = " + str(score_aug_test[1] * 100))
+print("Loss on augmented test data = " + str(score_aug_test[0]))
 
 
 
