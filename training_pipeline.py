@@ -23,7 +23,7 @@ for device in gpu_devices:
 ####Paramaters for data augmentation####
 
 #Value that determines the chance that a pixel in an image is changed to noise
-pixel_aug_chance = 0.15
+var = 0.075
 
 num_rot = 2 # number of rotated images to augment from each original image
 num_noise = 2 # number of noise image augmented from each original image
@@ -72,26 +72,6 @@ data = np.reshape(data, (2000, 16, 15, 1))
 
 print("Shape of original 2d data = " + str(data.shape))
 
-###Old data augmentation
-# new_data = []
-# for idx1 in range(len(data)):
-#   pic = data[idx1]
-#   #For each image, create multiple variations of the image by adding noise.
-#   #The amount of variations per image is determined by the data_multiplier variable
-#   for idx2 in range(data_multiplier):
-#     pic_to_augment = pic.copy()    
-#     for idx3 in range(len(pic_to_augment)):
-#       #For each pixel, small chance to add noise
-#       if(random.uniform(0, 1) < pixel_aug_chance):
-#         pic_to_augment[idx3] = random.uniform(0, 1)
-#     #Add the newly generated digit to the augmented dataset    
-#     new_data.append(pic_to_augment)
-
-
-# original_data = data
-# data = np.asarray(new_data)
-# print(data.shape)
-
 data_augmented = []
 
 for image in data:
@@ -99,8 +79,11 @@ for image in data:
         rot_img = random_rotation(image)
         data_augmented.append(rot_img)
     for j in range(num_noise):
-        noise_img = random_noise(image)
-        data_augmented.append(rot_img)
+        noise_img = random_noise(image, var)
+        data_augmented.append(noise_img)
+
+plt.imshow(data_augmented[3], cmap = 'Greys', interpolation='nearest')
+plt.show()
 
 data_augmented = np.asarray(data_augmented)
 print("Shape of augmented 2d data = " + str(data_augmented.shape))
