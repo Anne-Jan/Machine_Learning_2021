@@ -69,7 +69,7 @@ print("Shape of original 2d data = " + str(data.shape))
 
 
 #Create a split, use one for the training pipeline, with data augmentation.
-train_original_data, validation_original_data, train_labels_original_data, validation_labels_original_data = train_test_split(data, labels_original_data, test_size=0.2, random_state=0)
+train_original_data, validation_original_data, train_labels_original_data, validation_labels_original_data = train_test_split(data, labels_original_data, test_size = 0.2, stratify = labels_original_data, random_state=0)
 
 
 ### Below data augmentation is done on the original training data and validation data. 
@@ -143,9 +143,8 @@ for train, test in kfold.split(data_augmented_train, labels_aug_train):
   print("###################################")
   print("Fold Number:" + str(current_fold))
 
-  print(data_augmented_train[train].shape)
-  print(labels_aug_train[train])
-
+  # early_stopping = keras.callbacks.EarlyStopping(monitor = 'val_loss', mode = 'auto', verbose = 0)
+  # history = model.fit(data_augmented_train[train], labels_aug_train[train], epochs = 20, validation_data = (data_augmented_train[test], labels_aug_train[test]), callbacks = [early_stopping])
   history = model.fit(data_augmented_train[train], labels_aug_train[train], epochs = 20, validation_data = (data_augmented_train[test], labels_aug_train[test]))
   model_per_fold.append((model, history))
   score = model.evaluate(data_augmented_train[test], labels_aug_train[test], verbose = 0)
