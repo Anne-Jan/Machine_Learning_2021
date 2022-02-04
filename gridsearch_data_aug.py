@@ -119,6 +119,7 @@ for idx in range(0, nruns):
       accuracy_per_fold = []
       loss_per_fold = []
       model_per_fold = []
+      results_per_fold = []
 
       current_fold = 1
       #Perform k-fold cross validation on the train split
@@ -139,18 +140,19 @@ for idx in range(0, nruns):
         )
         # early_stopping = keras.callbacks.EarlyStopping(monitor = 'val_loss', mode = 'auto', verbose = 0)
         # history = model.fit(data_augmented_train[train], labels_aug_train[train], epochs = 20, validation_data = (data_augmented_train[test], labels_aug_train[test]), callbacks = [early_stopping])
-        history = model.fit(data_augmented_train[train], labels_aug_train[train], epochs = 5, validation_data = (data_augmented_train[test], labels_aug_train[test]), verbose = 0)
+        history = model.fit(data_augmented_train[train], labels_aug_train[train], epochs = 20, validation_data = (data_augmented_train[test], labels_aug_train[test]), verbose = 0)
         model_per_fold.append((model, history))
+        results_per_fold.append(np.mean(history.history['val_accuracy']))
         score = model.evaluate(data_augmented_train[test], labels_aug_train[test], verbose = 0)
 
-        accuracy_per_fold.append(score[1] * 100)
+        accuracy_per_fold.append(np.mean(history.history['val_accuracy']) * 100)
         loss_per_fold.append(score[0])
         current_fold += 1
 
 
       #Take the model with the highest accuracy from the cross validation
       best_model, best_history = model_per_fold[accuracy_per_fold.index(max(accuracy_per_fold))]
-      results_gridsearch.append(((max(best_history.history['val_accuracy']))))
+      results_gridsearch.append(sum(results_per_fold) / len(results_per_fold))
 
 
   

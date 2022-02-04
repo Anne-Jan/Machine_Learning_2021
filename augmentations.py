@@ -13,7 +13,7 @@ from skimage import io
 
 def random_rotation(image_array: ndarray):
     # pick a random degree of rotation between 45 degrees on the left and 45 degrees on the right
-    random_degree = random.uniform(-45, 45)
+    random_degree = random.uniform(-30, 30)
     return sk.transform.rotate(image_array, random_degree)
 
 def random_noise(image_array: ndarray, var):
