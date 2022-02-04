@@ -58,7 +58,6 @@ for i in range (1, 10):
   labels_original_data = np.concatenate((labels_original_data, np.zeros(200)+i))
 
 
-# print(labels)
 #Normalize the pixel values between 0-1
 data = data / np.amax(data)
 
@@ -66,10 +65,8 @@ data = data / np.amax(data)
 #Create data to be multidimensional
 data = np.reshape(data, (2000, 16, 15, 1))
 
-print("Shape of original 2d data = " + str(data.shape))
 
-
-#Create a split, use one for the training pipeline, with data augmentation.
+#Create a stratified split, use one for the training pipeline, with data augmentation.
 train_original_data, validation_original_data, train_labels_original_data, validation_labels_original_data = train_test_split(data, labels_original_data, test_size = 0.2, stratify = labels_original_data, random_state=0)
 
 
@@ -90,9 +87,8 @@ for image in train_original_data:
     labels_aug_train.append(label)
   labelidx += 1
 
+#Convert to numpy arrays for the cnn
 labels_aug_train = np.asarray(labels_aug_train)
-# plt.imshow(data_augmented_train[3], cmap = 'Greys', interpolation='nearest')
-# plt.show()
 
 ### Augmentation on validation data
 data_augmented_test = []
@@ -108,19 +104,18 @@ for image in validation_original_data:
     labels_aug_test.append(label)
   labelidx += 1
 
+#Convert to numpy arrays for the cnn
 labels_aug_test = np.asarray(labels_aug_test)
-
 data_augmented_train = np.asarray(data_augmented_train)
-print("Shape of augmented 2d train data = " + str(data_augmented_train.shape))
 data_augmented_test = np.asarray(data_augmented_test)
-print("Shape of augmented 2d test data = " + str(data_augmented_test.shape))
+
+
 
 #Define the Kfold Cross Validation Model
 folds = 10
 kfold = KFold(n_splits = folds, shuffle = True)
 
 accuracy_per_fold = []
-loss_per_fold = []
 model_per_fold = []
 results_per_fold = []
 
@@ -146,27 +141,24 @@ for train, test in kfold.split(data_augmented_train, labels_aug_train):
   print("###################################")
   print("Fold Number:" + str(current_fold))
 
-  # early_stopping = keras.callbacks.EarlyStopping(monitor = 'val_loss', mode = 'auto', verbose = 0)
-  # history = model.fit(data_augmented_train[train], labels_aug_train[train], epochs = 20, validation_data = (data_augmented_train[test], labels_aug_train[test]), callbacks = [early_stopping])
   history = model.fit(data_augmented_train[train], labels_aug_train[train], epochs = 20, validation_data = (data_augmented_train[test], labels_aug_train[test]))
   model_per_fold.append((model, history))
+
   #Append the val accuracy of the model of this fold
   results_per_fold.append(np.mean(history.history['val_accuracy']))
   score = model.evaluate(data_augmented_train[test], labels_aug_train[test], verbose = 0)
 
   accuracy_per_fold.append(np.mean(history.history['val_accuracy']) * 100)
-  loss_per_fold.append(score[0])
   current_fold += 1
 
-# for idx in range(current_fold - 1):
-#   print("Accuracy for fold: " + str(idx + 1)+ " = " + str(accuracy_per_fold[idx]))
-#   print("Loss for fold: " + str(idx + 1)+ " = " + str(loss_per_fold[idx]))
 
-#Take the model with the highest accuracy from the cross validation
+#Take the model with the highest val accuracy from the cross validation
 best_model, best_history = model_per_fold[accuracy_per_fold.index(max(accuracy_per_fold))]
 
 print("Averaged val accuracy of the kfold cross validation = " + str(sum(results_per_fold) / len(results_per_fold)))
 
+
+#Plot the accuracy and val accuracy
 plt.plot(best_history.history['accuracy'], label='accuracy')
 plt.plot(best_history.history['val_accuracy'], label = 'val_accuracy')
 plt.xlabel('Epoch')
@@ -175,8 +167,6 @@ plt.ylim([0.8, 1.05])
 plt.legend(loc='lower right')
 plt.grid()
 plt.show()
-
-
 
 
 
@@ -190,19 +180,11 @@ predicted_labels = tf.argmax(label_probabilities, axis = 1)
 cf_mat = tf.math.confusion_matrix(labels = validation_labels_original_data, predictions = predicted_labels, num_classes = 10)
 
 sns.heatmap(cf_mat, annot = True)
+plt.xlabel('Predicted Digit')
+plt.ylabel('Actual Digit')
 plt.show()
 
 print("################################################")
 print("Accuracy on original data = " + str(score_original_data[1] * 100))
 print("Loss on original data = " + str(score_original_data[0]))
-
-
-#evaluate the model on the augmented test data held back
-score_aug_test = model.evaluate(data_augmented_test, labels_aug_test, verbose = 0)
-
-print("################################################")
-print("Accuracy on augmented test data = " + str(score_aug_test[1] * 100))
-print("Loss on augmented test data = " + str(score_aug_test[0]))
-
-
 

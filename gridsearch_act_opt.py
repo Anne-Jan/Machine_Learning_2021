@@ -44,7 +44,6 @@ for idx in range(0, nruns):
           line[-1] = line[-1].replace("\n", "")
           for idx in range(len(line)):
             line[idx] = int(line[idx])
-          # print(len(line))
           data.append(line)
       data = np.asarray(data)
 
@@ -55,7 +54,6 @@ for idx in range(0, nruns):
         labels_original_data = np.concatenate((labels_original_data, np.zeros(200)+i))
 
 
-      # print(labels)
       #Normalize the pixel values between 0-1
       data = data / np.amax(data)
 
@@ -87,8 +85,6 @@ for idx in range(0, nruns):
         labelidx += 1
 
       labels_aug_train = np.asarray(labels_aug_train)
-      # plt.imshow(data_augmented[3], cmap = 'Greys', interpolation='nearest')
-      # plt.show()
 
       ### Augmentation on validation data
       data_augmented_test = []
@@ -135,8 +131,6 @@ for idx in range(0, nruns):
             loss='sparse_categorical_crossentropy',
             metrics=['accuracy']
         )
-        # early_stopping = keras.callbacks.EarlyStopping(monitor = 'val_loss', mode = 'auto', verbose = 0)
-        # history = model.fit(data_augmented_train[train], labels_aug_train[train], epochs = 20, validation_data = (data_augmented_train[test], labels_aug_train[test]), callbacks = [early_stopping])
         history = model.fit(data_augmented_train[train], labels_aug_train[train], epochs = 20, validation_data = (data_augmented_train[test], labels_aug_train[test]), verbose = 0)
         model_per_fold.append((model, history))
         results_per_fold.append(np.mean(history.history['val_accuracy']))
@@ -169,15 +163,5 @@ for idx in range(len(averaged_gridsearch_results)):
   print(averaged_gridsearch_results[idx])
 
 
-
-  
-
-      # plt.plot(best_history.history['accuracy'], label='accuracy')
-      # plt.plot(best_history.history['val_accuracy'], label = 'val_accuracy')
-      # plt.xlabel('Epoch')
-      # plt.ylabel('Accuracy')
-      # plt.ylim([0.5, 1])
-      # plt.legend(loc='lower right')
-      # plt.show()
 
 
