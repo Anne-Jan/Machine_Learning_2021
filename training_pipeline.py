@@ -6,6 +6,7 @@ from tensorflow import keras
 from sklearn.model_selection import KFold
 from PIL import Image
 import random
+import seaborn as sns
 
 from sklearn.model_selection import train_test_split
 import skimage as sk
@@ -166,40 +167,42 @@ best_model, best_history = model_per_fold[accuracy_per_fold.index(max(accuracy_p
 
 print("Averaged val accuracy of the kfold cross validation = " + str(sum(results_per_fold) / len(results_per_fold)))
 
-# plt.plot(best_history.history['accuracy'], label='accuracy')
-# plt.plot(best_history.history['val_accuracy'], label = 'val_accuracy')
-# # plt.plot(best_history.history['loss'], label = 'loss') ###DOESNT WORK, loss is too low
-# plt.xlabel('Epoch')
-# plt.ylabel('Accuracy')
-# plt.ylim([0.5, 1])
-# plt.legend(loc='lower right')
-# plt.show()
+plt.plot(best_history.history['accuracy'], label='accuracy')
+plt.plot(best_history.history['val_accuracy'], label = 'val_accuracy')
+plt.xlabel('Epoch')
+plt.ylabel('Accuracy')
+plt.ylim([0.8, 1.05])
+plt.legend(loc='lower right')
+plt.grid()
+plt.show()
 
 
 
 
 
 ####USE LATER AFTER TRAINING
-# #evaluate the model best on the augmented version of the test data created from the original data
-# score_original_data = model.evaluate(validation_original_data, validation_labels_original_data, verbose = 0)
-# label_probabilities = model.predict(validation_original_data)
-# predicted_labels = tf.argmax(label_probabilities, axis = 1)
-# print(predicted_labels)
-# print(predicted_labels.shape)
-# print('Confusion matrix on original test data')
-# print(tf.math.confusion_matrix(labels = validation_labels_original_data, predictions = predicted_labels, num_classes = 10))
+#evaluate the model best on the test data that was held back
+score_original_data = model.evaluate(validation_original_data, validation_labels_original_data, verbose = 0)
 
-# print("################################################")
-# print("Accuracy on original data = " + str(score_original_data[1] * 100))
-# print("Loss on original data = " + str(score_original_data[0]))
+#Also create a confusion mat
+label_probabilities = model.predict(validation_original_data)
+predicted_labels = tf.argmax(label_probabilities, axis = 1)
+cf_mat = tf.math.confusion_matrix(labels = validation_labels_original_data, predictions = predicted_labels, num_classes = 10)
+
+sns.heatmap(cf_mat, annot = True)
+plt.show()
+
+print("################################################")
+print("Accuracy on original data = " + str(score_original_data[1] * 100))
+print("Loss on original data = " + str(score_original_data[0]))
 
 
-# #evaluate the model best on the augmented test data
-# score_aug_test = model.evaluate(data_augmented_test, labels_aug_test, verbose = 0)
+#evaluate the model on the augmented test data held back
+score_aug_test = model.evaluate(data_augmented_test, labels_aug_test, verbose = 0)
 
-# print("################################################")
-# print("Accuracy on augmented test data = " + str(score_aug_test[1] * 100))
-# print("Loss on augmented test data = " + str(score_aug_test[0]))
+print("################################################")
+print("Accuracy on augmented test data = " + str(score_aug_test[1] * 100))
+print("Loss on augmented test data = " + str(score_aug_test[0]))
 
 
 
