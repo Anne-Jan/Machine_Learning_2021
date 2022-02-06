@@ -1,7 +1,7 @@
 # Machine_Learning_2021
 Repository for developing the semester project for the RUG course Machine Learning
 
-The file `mnist_digits_data.txt` contains the small MNIST digits dataset used for this project.
+The file `mfeat-pix.txt` contains the small MNIST digits dataset used for this project.
 
 The file `gridsearch_data_aug.py` was used to find the optimimal hyperparameters for the data augmentation. 
 
