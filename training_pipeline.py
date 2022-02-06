@@ -38,7 +38,7 @@ optimizer = 'adam'
 
 ### Load data ###
 data = []
-with open('mnist_digits_data.txt') as f:
+with open('mfeat-pix.txt') as f:
   lines = f.readlines()
   # print(len(lines))
   for line in lines:
